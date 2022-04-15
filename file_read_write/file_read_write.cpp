@@ -6,20 +6,20 @@
 
 using namespace std;
 
-#include "socket_file_read_send_write.h"
+#include "file_read_write.h"
 
-socket_file_read_send_write::socket_file_read_send_write()
+file_read_write::file_read_write()
 {
 	memset(m_read_buff, 0, sizeof(m_read_buff));
 }
 
-socket_file_read_send_write::~socket_file_read_send_write()
+file_read_write::~file_read_write()
 {
 	m_read_file_fd.close();
 	m_write_file_fd.close();
 }
 
-int socket_file_read_send_write::operate_read_file_one_byte()
+int file_read_write::operate_read_file_one_byte()
 {
 	m_read_file_fd.open(READ_FILE_NAME, ios::in | ios::binary);
 	if (!m_read_file_fd.is_open())
@@ -41,7 +41,7 @@ int socket_file_read_send_write::operate_read_file_one_byte()
 	}
 
 	gettimeofday(&end, NULL);
-	// 单字节读写时间11分26秒 10分09秒
+	// 单字节读写时间11分05秒 10分09秒
 	usec = (end.tv_sec - start.tv_sec) * 1000000;
 	usec += end.tv_usec - start.tv_usec;
 
@@ -50,7 +50,7 @@ int socket_file_read_send_write::operate_read_file_one_byte()
 	return 0;
 }
 
-int socket_file_read_send_write::operate_read_file()
+int file_read_write::operate_read_file()
 {
 	streampos 		position;
 	long long int 	file_size;
@@ -111,7 +111,7 @@ int socket_file_read_send_write::operate_read_file()
 	return 0;
 }
 
-int socket_file_read_send_write::operate_write_file()
+int file_read_write::operate_write_file()
 {
 	m_write_file_fd.open(WRITE_FILE_NAME, ios::out | ios::binary);
 	if (!m_write_file_fd.is_open())
@@ -123,7 +123,7 @@ int socket_file_read_send_write::operate_write_file()
 	return 0;
 }
 
-int socket_file_read_send_write::start_read_write()
+int file_read_write::start_read_write()
 {
 	int result;
 	
@@ -141,7 +141,7 @@ int socket_file_read_send_write::start_read_write()
 
 int main(int argc, char *argv[])
 {
-	socket_file_read_send_write *file_operation = new socket_file_read_send_write;
+	file_read_write *file_operation = new file_read_write;
 
 	file_operation->start_read_write();
 

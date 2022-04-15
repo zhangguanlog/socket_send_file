@@ -2,13 +2,13 @@
 #include <fstream>
 #include <sys/time.h>
 #include <unistd.h>
-#include "read_write_define.h"
+#include "file_define.h"
 
-class socket_file_read_send_write
+class file_read_write
 {
 public:
-	socket_file_read_send_write();
-	~socket_file_read_send_write();
+	file_read_write();
+	~file_read_write();
 
 public:
 	int start_read_write();
