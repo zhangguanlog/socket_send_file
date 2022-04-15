@@ -22,13 +22,13 @@ private:
 	static void *client_send_message(void *param);
 
 private:
-	int 				m_client_fd;
-	struct sockaddr_in 	m_server_addr;
-	socklen_t 			m_client_demo_sock_len;
-	char 				m_recv_buff[MAX_BUFF_LEN];
-	char 				m_send_buff[MAX_BUFF_LEN];
-	pthread_t 			m_recv_pt;
-	pthread_t 			m_send_pt;
+	int 				m_client_fd;				// 客户端fd
+	struct sockaddr_in 	m_server_addr;				// 要连接的服务端信息
+	socklen_t 			m_client_demo_sock_len;		// 客户端信息长度
+	char 				m_recv_buff[MAX_BUFF_LEN]; 	// 接收数据存储
+	char 				m_send_buff[MAX_BUFF_LEN];	// 发送数据存储
+	pthread_t 			m_recv_pt;					// 接收数据线程
+	pthread_t 			m_send_pt;					// 发送数据线程
 };
 
 

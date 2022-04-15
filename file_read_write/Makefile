@@ -6,15 +6,15 @@ bin_dir = ../
 
 cxxflags = -g -Wall
 
-target = write_read.a
+target = write_read
 
 src = file_read_write.cpp
 
 all:$(target) publish
 
 $(target):file_read_write.o
-	ar -crv  $(target) file_read_write.o
-#	$(cpp) $(cxxflags) file_read_write.o -o $(target)
+	$(cpp) $(cxxflags) file_read_write.o -o $(target)
+#	ar -crv  $(target) file_read_write.o
 	
 
 file_read_write.o:$(src)

@@ -92,14 +92,14 @@ int file_read_write::operate_read_file()
 		{
 			break;
 		}
-		m_write_file_fd.write(m_read_buff, sizeof(m_read_buff));
+		// m_write_file_fd.write(m_read_buff, sizeof(m_read_buff));
 
 		memset(m_read_buff, 0, sizeof(m_read_buff));
 	}
 
 	// 读写剩余的部分
 	m_read_file_fd.read(m_read_buff, remainder_size);
-	m_write_file_fd.write(m_read_buff, remainder_size);
+	// m_write_file_fd.write(m_read_buff, remainder_size);
 
 	gettimeofday(&end, NULL);
 	// 单字节读写时间11分26秒 10分09秒
