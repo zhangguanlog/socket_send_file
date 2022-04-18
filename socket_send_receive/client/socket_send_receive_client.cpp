@@ -101,6 +101,8 @@ void *client_socket_send_receive::client_send_message(void *param)
 	// 计算剩余还没有读取的部分
 	remainder_size = file_size - (read_times_integer * MAX_BUFF_LEN);
 
+	cout << "需要读的次数：" << read_times_integer << "剩余部分：" << remainder_size << endl;
+
 	// 设置发送缓冲区的大小的一半为40k
 	tcp_max_buff_size = 40 * 1024; 
 
@@ -121,7 +123,7 @@ void *client_socket_send_receive::client_send_message(void *param)
 	{
 		cout << "get the buff size error!" << endl;
 	}
-	cout << tcp_max_buff_size << endl;
+	cout << "默认的发送缓冲区的大小：" << tcp_max_buff_size << endl;
 
 	// 记录开始时间
 	gettimeofday(&start, NULL);
@@ -138,17 +140,19 @@ void *client_socket_send_receive::client_send_message(void *param)
 
 		// 获取已使用的发送缓冲区的大小
 		result = ioctl(client_send->m_client_fd, SIOCOUTQ, &value);
+		// cout << "value:" << value << endl;
 		if (result < 0)
 		{
-			cout << "get send buff error!" << endl;
+			// cout << "get send buff error!" << endl;
 			goto EXECUTE_SEND;
 		}
 
-		// 缓冲区存不下了，不要读取
-		if ((tcp_max_buff_size - value) < 2048 * 2)
+		// 缓冲区存不下了，不要读取 接收端足够大，此地方没有意义，socket 默认创建为阻塞模式，
+		// 缓冲区存不下的时候会自动等待，所以不需要自己去判断缓冲区的情况，之前send error错误另有情况
+		// if ((tcp_max_buff_size - value) < 2048 * 2)
 		{
 			// cout << tcp_max_buff_size - value << endl;
-			continue;
+			// continue;
 		}		
 		
 		// 读取数据，每次读取buff能够存的最大值
@@ -227,7 +231,7 @@ int client_socket_send_receive::begin_socket_client()
 	int result;
 	char exit_buff[] = "quit";
 
-	// 创建一个socket
+	// 创建一个socket，默认阻塞模式
 	m_client_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (m_client_fd < 0)
 	{

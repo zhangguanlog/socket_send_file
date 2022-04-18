@@ -59,7 +59,7 @@ void *socket_receive_send_server::create_send_message(void *param)
 void *socket_receive_send_server::create_receive_message(void *pragma)
 {
 	socket_receive_send_server* recv_t = (socket_receive_send_server *) pragma;
-	int 						len;	
+	int 						len = 0;	
 
 	// 打开指定的文件，没有的话创建
 	recv_t->m_write_file_fd.open(WRITE_FILE_NAME, ios::out  | ios::ate | ios::binary);
@@ -115,7 +115,7 @@ int socket_receive_send_server::start_socket_server()
 	socklen_t				len;
 	char 					quit[] = "quit";
 
-	// 创建socket
+	// 创建socket，默认阻塞模式
 	m_socket_server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (m_socket_server_fd < 0)
 	{
