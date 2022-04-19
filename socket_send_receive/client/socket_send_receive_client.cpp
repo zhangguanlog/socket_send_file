@@ -40,6 +40,10 @@ client_socket_send_receive::~client_socket_send_receive()
 
 	// 关闭socket
 	close(m_client_fd);
+
+	// 关闭文件
+	m_read_file_fd.close();
+	m_write_file_fd.close();
 }
 
 // 接收线程
@@ -50,11 +54,14 @@ void *client_socket_send_receive::client_recv_message(void *param)
 
 	while (1)
 	{
-		recv_len = recv(client_parm->m_client_fd, client_parm->m_recv_buff, MAX_BUFF_LEN, 0);
+		recv_len = recv(client_parm->m_client_fd, client_parm->m_recv_buff, MAX_BUFF_RECV_LEN, 0);
 		if (recv_len >= 0)
 		{
-			cout << client_parm->m_recv_buff;
-			memset(client_parm->m_recv_buff, 0, MAX_BUFF_LEN);
+			// cout << "recv_len = " << recv_len << "\n" << client_parm->m_recv_buff;
+			// 像文件中写入数据
+			client_parm->m_write_file_fd.write(client_parm->m_recv_buff, recv_len);
+			// 写入完成后字符串清零
+			memset(client_parm->m_recv_buff, 0, MAX_BUFF_RECV_LEN);
 		}
 	}
 
@@ -65,7 +72,6 @@ void *client_socket_send_receive::client_recv_message(void *param)
 void *client_socket_send_receive::client_send_message(void *param)
 {
 	client_socket_send_receive 	*client_send = (client_socket_send_receive *)param;
-	ifstream 					read_file_fd;			// 读取文件的字符句柄
 	streampos 					position;				// 文件末尾位置的大小
 	long long int 				file_size;				// 文件的大小
 	long int 					read_times_integer; 	// 读取文件大小 除 每次能读的大小的整数部分
@@ -79,21 +85,13 @@ void *client_socket_send_receive::client_send_message(void *param)
 	socklen_t 					optlen;    				// 选项值长度
 	unsigned long int			value;
 
-	// 打开需要发送的文件
-	read_file_fd.open(READ_FILE_NAME, ios::in | ios::binary);
-	if (!read_file_fd.is_open())
-	{
-		cout << "open read file error!" << endl;
-		return NULL;
-	}
-
 	// 文件指针设置到文件末尾
-	read_file_fd.seekg(0, ios::end);
+	client_send->m_read_file_fd.seekg(0, ios::end);
 	// 获取文件的大小
-	position = read_file_fd.tellg();
+	position = client_send->m_read_file_fd.tellg();
 	file_size = position;
 	// 文件指针移动到文件开始
-	read_file_fd.seekg(0, ios::beg);
+	client_send->m_read_file_fd.seekg(0, ios::beg);
 	cout << file_size << endl;
 
 	// 计算读完文件需要读的次数
@@ -139,12 +137,12 @@ void *client_socket_send_receive::client_send_message(void *param)
 		}
 
 		// 获取已使用的发送缓冲区的大小
-		result = ioctl(client_send->m_client_fd, SIOCOUTQ, &value);
+		// result = ioctl(client_send->m_client_fd, SIOCOUTQ, &value);
 		// cout << "value:" << value << endl;
-		if (result < 0)
+		// if (result < 0)
 		{
 			// cout << "get send buff error!" << endl;
-			goto EXECUTE_SEND;
+			// goto EXECUTE_SEND;
 		}
 
 		// 缓冲区存不下了，不要读取 接收端足够大，此地方没有意义，socket 默认创建为阻塞模式，
@@ -156,10 +154,10 @@ void *client_socket_send_receive::client_send_message(void *param)
 		}		
 		
 		// 读取数据，每次读取buff能够存的最大值
-		read_file_fd.read(client_send->m_send_buff, sizeof(client_send->m_send_buff));
+		client_send->m_read_file_fd.read(client_send->m_send_buff, sizeof(client_send->m_send_buff));
 
 		// 读到文件结尾，退出循环
-		if (read_file_fd.eof())
+		if (client_send->m_read_file_fd.eof())
 		{
 			cout << "end file!" << endl;
 			break;
@@ -169,7 +167,7 @@ void *client_socket_send_receive::client_send_message(void *param)
 		result = send(client_send->m_client_fd, client_send->m_send_buff, sizeof(client_send->m_send_buff), 0);
 		if (result != MAX_BUFF_LEN)
 		{
-			cout << "send error! \n" << endl;
+			cout << "send error, result: \n" << result << endl;
 		}
 		times++;
 		// cout << times << " "<< read_times_integer << endl;
@@ -179,7 +177,7 @@ void *client_socket_send_receive::client_send_message(void *param)
 	// 读写剩余的部分
 	if (remainder_size > 0)
 	{
-		read_file_fd.read(client_send->m_send_buff, remainder_size);	
+		client_send->m_read_file_fd.read(client_send->m_send_buff, remainder_size);	
 		result = send(client_send->m_client_fd, client_send->m_send_buff, remainder_size, 0);
 		if (result != remainder_size)
 		{
@@ -194,14 +192,13 @@ void *client_socket_send_receive::client_send_message(void *param)
 	usec = (end.tv_sec - start.tv_sec) * 1000000;
 	usec += end.tv_usec - start.tv_usec;
 
-	printf("%lfus, %lfs, %lfmin\n", usec, usec / 1000000, usec / 1000000 / 60);
+	printf("%lf us, %lf s, %lf min, %lf byte/s\n", usec, usec / 1000000, usec / 1000000 / 60, file_size / (usec / 1000000));
 
 	// 发送完成退出程序
-	memcpy(client_send->m_recv_buff, "quit", 4);
+	// memcpy(client_send->m_recv_buff, "quit", 4);
 
-EXECUTE_SEND:
+// EXECUTE_SEND:
 
-	read_file_fd.close();
 	return NULL;
 }
 
@@ -221,6 +218,26 @@ int client_socket_send_receive::client_process_recv_send_buff()
 	{
 		cout << "create send thread error!" << endl;
 		return -2;
+	}
+	return 0;
+}
+
+int client_socket_send_receive::open_read_write_file()
+{
+	// 打开需要发送的文件
+	m_read_file_fd.open(READ_FILE_NAME, ios::in | ios::binary);
+	if (!m_read_file_fd.is_open())
+	{
+		cout << "open read file error!" << endl;
+		return 1;
+	}
+	
+	// 打开需要写入的文件
+	m_write_file_fd.open(WRITE_FILE_NAME, ios::out  | ios::ate | ios::binary);
+	if (!m_write_file_fd.is_open())
+	{
+		cout << "write file open error!" << endl;
+		return 1;
 	}
 
 	return 0;
@@ -247,17 +264,22 @@ int client_socket_send_receive::begin_socket_client()
 		return -2;
 	}
 
+	// 打开读写的文件
+	open_read_write_file();
+	
 	// 创建接收发送线程
 	client_process_recv_send_buff();
 
 	// 退出主程序
 	while (1)
 	{
+#if 0
 		if ((!strncmp(m_recv_buff, exit_buff, 4)))
 		{
 			cout << "bye bye!" << endl;
 			break;
 		}
+#endif
 	}
 
 	return 0;
